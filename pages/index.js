@@ -68,7 +68,7 @@ export default function Home(props) {
   const [seguidores , setSeguidores] = React.useState([]);
 
   React.useEffect(function () {
-    fetch('https://api.github.com/users/karen-freitas/followers')
+    fetch('https://api.github.com/users/githubUser/followers')
       .then(function (respostaDoServidor) {
         return respostaDoServidor.json()
       })
