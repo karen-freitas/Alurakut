@@ -11,7 +11,7 @@ const GlobalStyle = createGlobalStyle`
   }
   body {
     font-family:sans-serif;
-    background-image:url('https://i.pinimg.com/236x/48/05/17/480517be2158c6e56ec9ef8e227c2395.jpg');
+    background-image: radial-gradient( circle farthest-corner at 49.6% 51.4%, rgba(172,194,212) 31.5%, rgba(170,120,180) 90% );
     background-size:cover;
   }
 

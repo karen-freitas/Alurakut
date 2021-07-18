@@ -140,7 +140,7 @@ AlurakutMenu.Wrapper = styled.header`
       }
     }
     input {
-      background:#c7dbea;
+      background:#a1bacf;
       padding: 10px 42px;
       border: 0;
       background-image: url(${`${BASE_URL}/icons/search.svg`});

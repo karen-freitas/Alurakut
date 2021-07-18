@@ -1,12 +1,10 @@
 import React from 'react';
-import MainGrid from "../src/components/MainGrid";
-import Box from "../src/components/Box";
-import {
-  AlurakutMenu,
-  AlurakutProfileSidebarMenuDefault,
-  OrkutNostalgicIconSet,
-} from "../src/lib/AlurakutCommons";
-import { ProfileRelationsBoxWrapper } from "../src/components/ProfileRelations";
+import nookies from 'nookies';
+import jwt from 'jsonwebtoken';
+import MainGrid from '../src/components/MainGrid'
+import Box from '../src/components/Box'
+import { AlurakutMenu, AlurakutProfileSidebarMenuDefault, OrkutNostalgicIconSet } from '../src/lib/AlurakutCommons';
+import { ProfileRelationsBoxWrapper } from '../src/components/ProfileRelations';
 
 function ProfileSidebar(propriedades) {
   return (
@@ -47,18 +45,12 @@ function ProfileRelationsBox (propriedades){
    
 
 
-export default function Home() {
-  const [comunidades, setComunidades] = React.useState([{
-    title: 'Eu odeio acordar cedo',
-    image:'https://alurakut.vercel.app/capa-comunidade-01.jpg'
-    
-  }
-
-]);
+export default function Home(props) {
+  const [comunidades, setComunidades] = React.useState([]);
   //const comunidades = comunidades[0]
   //const alteradorDeComunidades/setComunidades = comunidades[1]
 
-  const usuarioAleatorio = "karen-freitas";
+  const usuarioAleatorio = props.githubUser;
   const pessoasFavoritas = [
     "juunegreiros",
     "omariosouto",
@@ -83,6 +75,34 @@ export default function Home() {
       .then(function (respostaCompleta) {
         setSeguidores(respostaCompleta) 
       })
+
+    // Requisições para a API GraphicQL
+
+    fetch('https://graphql.datocms.com/', {
+      method: 'POST',
+      headers:{
+        'Authorization': `e33b2b00337a9379d4ad80871deded`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({"query": `query {
+        allCommunities {
+          title
+          id
+          image
+          creatorSlug
+        }
+      }`})
+
+    })
+
+    .then((response) => response.json()) // Pega o retorno do response.json() e já retorna
+    .then((respostaCompleta) => {
+      const comunidadesVindasDoDato = respostaCompleta.data.allCommunities;
+      console.log(comunidadesVindasDoDato)
+      setComunidades(comunidadesVindasDoDato)
+    })
+
     }, [])
 
 
@@ -110,18 +130,28 @@ export default function Home() {
               //console.log('Campo: ', dadosDoForm.get('image'))
 
               const comunidade = {
-                id: new Date().toISOString(),
                 title: dadosDoForm.get('title'),
-                image: dadosDoForm.get('image')
+                image: dadosDoForm.get('image'),
+                creatorSlug: usuarioAleatorio,
 
               }
               
-
-
-              //comunidades.push('Alura Stars')
-              const comunidadesAtualizadas = [...comunidades, comunidade]
-              setComunidades(comunidadesAtualizadas)
-              console.log(comunidades)
+              fetch('/api/comunidades', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(comunidade)
+              })
+              .then(async (response) => {
+                const dados = await response.json();
+                console.log(dados.registroCriado);
+                const comunidade = dados.registroCriado;
+                const comunidadesAtualizadas = [...comunidades, comunidade];
+                setComunidades(comunidadesAtualizadas)
+              })
+             
+              
             }}>
 
               <div>
@@ -176,4 +206,33 @@ export default function Home() {
       </MainGrid>
     </>
   );
+}
+
+export async function getServerSideProps(context) {
+  const cookies =  nookies.get(context)
+  const token = cookies.USER_TOKEN
+  const {githubUser} = jwt.decode(token)  // Destructuring passa entre chaves  nome da variável com o mesmo nome da chave
+  const { isAuthenticated } = await fetch('https://alurakut.vercel.app/api/auth', {
+    headers: {
+        Authorization: token
+      }
+  })
+  .then((resposta) => resposta.json())
+
+  if(!isAuthenticated) {
+    return {
+      redirect: {
+        destination: '/login',
+        permanent: false,
+      }
+    }
+  }
+
+  
+
+  return {
+    props: {
+      githubUser
+    }, // will be passed to the page component as props
+  }
 }
